@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MediSort — Result</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="page">
+  <header class="app-header">
+    <h1>MediSort</h1>
+    <a href="/" class="back-link">&larr; Analyze another photo</a>
+  </header>
+
+  {% if error %}
+  <div class="alert alert-error">
+    <strong>Could not process this photo.</strong>
+    <p>{{ error }}</p>
+  </div>
+
+  {% elif result.matches_expected_document_type == false %}
+  <div class="alert alert-warning">
+    <strong>This doesn't look like a {{ doc_type.replace('_', ' ') }}.</strong>
+    <p>{{ result.mismatch_reason }}</p>
+    <p class="hint">Try again with the correct document type selected, or a different photo.</p>
+  </div>
+
+  {% elif doc_type == "medicine_strip" %}
+  <div class="report-card">
+    <div class="report-header">
+      <h2>{{ result.brand_name or "Unknown brand" }}</h2>
+      {% if result.expiry.status == "EXPIRED" %}
+        <span class="badge badge-danger">Expired</span>
+      {% elif result.expiry.status == "VALID" %}
+        <span class="badge badge-success">Valid</span>
+      {% else %}
+        <span class="badge badge-neutral">Expiry unknown</span>
+      {% endif %}
+    </div>
+
+    <table class="kv-table">
+      <tr><th>Active ingredients</th><td>{{ result.drugs | map(attribute='text') | join(', ') or '—' }}</td></tr>
+      <tr><th>Strength</th><td>{{ result.dosages[0].text if result.dosages else '—' }}</td></tr>
+      <tr><th>Manufacturer</th><td>{{ result.manufacturer or '—' }}</td></tr>
+      <tr><th>Batch no.</th><td>{{ result.batch_no or '—' }}</td></tr>
+      <tr><th>Expiry date</th><td>{{ result.expiry.likely_expiry_date or '—' }}
+        {% if result.expiry.days_remaining is not none %}
+          <span class="muted">
+            ({{ result.expiry.days_remaining|abs }} days {{ 'overdue' if result.expiry.days_remaining < 0 else 'remaining' }})
+          </span>
+        {% endif %}
+      </td></tr>
+    </table>
+
+    {% if result.drug_usage_info %}
+    <h3>What these are used for</h3>
+    {% for info in result.drug_usage_info %}
+      {% if info.purpose %}
+      <div class="usage-block">
+        <h4>{{ info.drug_name }}</h4>
+        <p>{{ info.purpose }}</p>
+      </div>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  {% elif doc_type == "prescription" %}
+  <div class="report-card">
+    <div class="report-header">
+      <h2>Prescription</h2>
+    </div>
+
+    <table class="kv-table">
+      <tr><th>Patient</th><td>{{ result.patient_name or '—' }}</td></tr>
+      <tr><th>Prescribing doctor</th><td>{{ result.doctor_name or '—' }}</td></tr>
+      <tr><th>Date</th><td>{{ result.dates.dates_found[0] if result.dates.dates_found else '—' }}</td></tr>
+    </table>
+
+    <h3>Medications</h3>
+    <table class="data-table">
+      <thead>
+        <tr><th>Name</th><th>Dosage</th><th>Frequency</th><th>Duration</th></tr>
+      </thead>
+      <tbody>
+        {% for med in result.medications %}
+        <tr>
+          <td>{{ med.name }}</td>
+          <td>{{ med.dosage or '—' }}</td>
+          <td>{{ med.frequency or '—' }}</td>
+          <td>{{ med.duration or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {% if result.drug_usage_info %}
+    <h3>What these are used for</h3>
+    {% for info in result.drug_usage_info %}
+      {% if info.purpose %}
+      <div class="usage-block">
+        <h4>{{ info.drug_name }}</h4>
+        <p>{{ info.purpose }}</p>
+      </div>
+      {% endif %}
+    {% endfor %}
+    {% endif %}
+  </div>
+
+  {% elif doc_type == "lab_report" %}
+  <div class="report-card">
+    <div class="report-header">
+      <h2>Lab report</h2>
+    </div>
+
+    <table class="kv-table">
+      <tr><th>Patient</th><td>{{ result.patient_name or '—' }}</td></tr>
+      <tr><th>Report date</th><td>{{ result.dates.report_date or '—' }}</td></tr>
+    </table>
+
+    <h3>Results</h3>
+    <table class="data-table">
+      <thead>
+        <tr><th>Test</th><th>Result</th><th>Normal range</th><th>Units</th></tr>
+      </thead>
+      <tbody>
+        {% for test in result.tests %}
+        <tr class="{{ 'row-abnormal' if test.flag in ('low', 'high') else '' }}">
+          <td>{{ test.name }}</td>
+          <td>
+            {{ test.result or '—' }}
+            {% if test.flag == 'low' %}<span class="flag flag-low">LOW</span>{% endif %}
+            {% if test.flag == 'high' %}<span class="flag flag-high">HIGH</span>{% endif %}
+          </td>
+          <td>{{ test.normal_range or '—' }}</td>
+          <td>{{ test.units or '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="hint">Highlighted rows fall outside the printed normal range — this is a simple numeric comparison, not a clinical interpretation.</p>
+  </div>
+  {% endif %}
+
+  <p class="disclaimer">Informational only — always follow your doctor's or pharmacist's instructions.</p>
+</div>
+</body>
+</html>

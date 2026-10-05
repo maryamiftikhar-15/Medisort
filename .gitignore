@@ -1,0 +1,19 @@
+# Secrets — never commit your Hugging Face token
+.env
+
+# Virtual environment
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+
+# Runtime artifacts
+uploads/
+last_result.json
+output.json
+
+# OS/editor
+.DS_Store
+.vscode/

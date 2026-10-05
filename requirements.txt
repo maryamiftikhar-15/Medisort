@@ -1,0 +1,4 @@
+huggingface_hub>=0.25.0
+python-dateutil>=2.9.0
+requests>=2.31.0
+

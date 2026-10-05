@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MediSort</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="page">
+  <header class="app-header">
+    <h1>MediSort</h1>
+    <p class="subtitle">Photograph a prescription, lab report, or medicine strip to extract structured information.</p>
+  </header>
+
+  {% if error %}
+  <div class="alert alert-error">{{ error }}</div>
+  {% endif %}
+
+  <form class="upload-card" action="/analyze" method="post" enctype="multipart/form-data">
+    <label class="field">
+      <span>Document type</span>
+      <select name="doc_type" required>
+        <option value="prescription">Prescription</option>
+        <option value="lab_report">Lab report</option>
+        <option value="medicine_strip">Medicine strip / box</option>
+      </select>
+    </label>
+
+    <label class="field">
+      <span>Photo</span>
+      <input type="file" name="image" accept="image/*" required>
+    </label>
+
+    <button type="submit" class="btn-primary">Analyze</button>
+  </form>
+
+  <p class="disclaimer">Informational only — always follow your doctor's or pharmacist's instructions.</p>
+</div>
+</body>
+</html>
